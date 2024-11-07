@@ -1,11 +1,13 @@
 interface ReadmeConfig {
   projectName: string;
   isTypeScript: boolean;
+  usePrettier: boolean;
 }
 
 export function generateReadmeContent({
   projectName,
   isTypeScript,
+  usePrettier,
 }: ReadmeConfig): string {
   return `# ${projectName}
 
@@ -73,13 +75,19 @@ ${
 - \`npm run build\`: Compiles TypeScript code to JavaScript.
 - \`npm start\`: Runs the compiled JavaScript code from the dist folder.
 - \`npm test\`: Runs the test suite using Jest.
-- \`npm run lint\`: Lints the code using ESLint.
-- \`npm run format\`: Formats the code using Prettier.`
+- \`npm run lint\`: Lints the code using ESLint.${
+        usePrettier
+          ? '\n- `npm run format`: Formats the code using Prettier.'
+          : ''
+      }`
     : `- \`npm run dev\`: Starts the development server with hot-reload using nodemon.
 - \`npm start\`: Runs the JavaScript code directly.
 - \`npm test\`: Runs the test suite using Jest.
-- \`npm run lint\`: Lints the code using ESLint.
-- \`npm run format\`: Formats the code using Prettier.`
+- \`npm run lint\`: Lints the code using ESLint.${
+        usePrettier
+          ? '\n- `npm run format`: Formats the code using Prettier.'
+          : ''
+      }`
 }
 
 ## Project Components
