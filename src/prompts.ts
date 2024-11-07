@@ -21,3 +21,16 @@ export async function promptForProjectType(): Promise<
 
   return answer.projectType.toLowerCase() as 'typescript' | 'javascript';
 }
+
+export async function promptForPrettier(): Promise<boolean> {
+  const answer = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'usePrettier',
+      message: 'Do you want to use Prettier for code formatting?',
+      default: true,
+    },
+  ]);
+
+  return answer.usePrettier;
+}
