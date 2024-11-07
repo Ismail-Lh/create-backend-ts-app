@@ -1,11 +1,12 @@
 import path from 'node:path';
 
 import { createDirectoryStructure, createFile } from './file-system';
-import { promptForProjectType } from './prompts';
+import { promptForPrettier, promptForProjectType } from './prompts';
 import { generateTypeScriptFiles } from './templates/typescript';
 import { generateJavaScriptFiles } from './templates/javascript';
 import type { ProjectConfig } from './types';
 import { generateReadmeContent } from './templates/readme';
+import { generatePrettierConfig } from './templates/prettier';
 
 /**
  * Creates a new project in the specified directory.
@@ -24,12 +25,18 @@ export async function createProject(projectDirectory: string): Promise<void> {
     console.log(`Creating a new project in ${projectDirectory}...`);
 
     const projectType = await promptForProjectType();
+    const usePrettier = await promptForPrettier();
+
     const isTypeScript = projectType === 'typescript';
     const projectName = path.basename(projectDirectory);
 
     await createDirectoryStructure(projectDirectory);
 
-    const packageJson = generatePackageJson(projectDirectory, isTypeScript);
+    const packageJson = generatePackageJson(
+      projectDirectory,
+      isTypeScript,
+      usePrettier
+    );
     await createFile(
       path.join(projectDirectory, 'package.json'),
       JSON.stringify(packageJson, null, 2)
@@ -39,8 +46,13 @@ export async function createProject(projectDirectory: string): Promise<void> {
     const readmeContent = generateReadmeContent({
       projectName,
       isTypeScript,
+      usePrettier,
     });
     await createFile(path.join(projectDirectory, 'README.md'), readmeContent);
+
+    if (usePrettier) {
+      await generatePrettierConfig(projectDirectory);
+    }
 
     if (isTypeScript) {
       await generateTypeScriptFiles(projectDirectory);
@@ -67,7 +79,8 @@ export async function createProject(projectDirectory: string): Promise<void> {
  */
 function generatePackageJson(
   projectDirectory: string,
-  isTypeScript: boolean
+  isTypeScript: boolean,
+  usePrettier: boolean
 ): ProjectConfig {
   return {
     name: path.basename(projectDirectory),
@@ -80,6 +93,7 @@ function generatePackageJson(
         ? 'nodemon --watch src --ext ts --exec ts-node src/server.ts'
         : 'nodemon src/server.js',
       ...(isTypeScript ? { build: 'tsc' } : {}),
+      ...(usePrettier ? { format: 'prettier --write "src/**/*.{js,ts}"' } : {}),
     },
     dependencies: {
       express: '^4.17.1',
@@ -94,6 +108,7 @@ function generatePackageJson(
             typescript: '^4.5.2',
           }
         : {}),
+      ...(usePrettier ? { prettier: '^2.5.1' } : {}),
     },
   };
 }
