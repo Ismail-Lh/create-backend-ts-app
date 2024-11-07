@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { program } from 'commander';
+import inquirer from 'inquirer';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,20 @@ interface ProjectConfig {
   devDependencies: {
     [key: string]: string;
   };
+}
+
+async function promptForProjectType(): Promise<'typescript' | 'javascript'> {
+  const answer = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'projectType',
+      message: 'Choose the project type:',
+      choices: ['TypeScript', 'JavaScript'],
+      default: 'TypeScript',
+    },
+  ]);
+
+  return answer.projectType.toLowerCase() as 'typescript' | 'javascript';
 }
 
 async function createDirectoryStructure(
@@ -55,27 +70,37 @@ async function createProject(projectDirectory: string): Promise<void> {
   try {
     console.log(`Creating a new project in ${projectDirectory}...`);
 
+    const projectType = await promptForProjectType();
+    const isTypeScript = projectType === 'typescript';
+    const fileExtension = isTypeScript ? 'ts' : 'js';
+
     await createDirectoryStructure(projectDirectory);
 
     const packageJson: ProjectConfig = {
       name: path.basename(projectDirectory),
       version: '1.0.0',
-      description: 'A project created with create-backend-ts-app',
-      main: 'dist/server.js',
+      description: 'A project created with create-my-app',
+      main: isTypeScript ? 'dist/server.js' : 'src/server.js',
       scripts: {
-        start: 'node dist/server.js',
-        dev: 'nodemon --watch src --ext ts --exec ts-node src/server.ts',
-        build: 'tsc',
+        start: isTypeScript ? 'node dist/server.js' : 'node src/server.js',
+        dev: isTypeScript
+          ? 'nodemon --watch src --ext ts --exec ts-node src/server.ts'
+          : 'nodemon src/server.js',
+        ...(isTypeScript ? { build: 'tsc' } : {}),
       },
       dependencies: {
         express: '^4.17.1',
       },
       devDependencies: {
-        '@types/express': '^4.17.13',
-        '@types/node': '^16.11.12',
         nodemon: '^2.0.15',
-        'ts-node': '^10.4.0',
-        typescript: '^4.5.2',
+        ...(isTypeScript
+          ? {
+              '@types/express': '^4.17.13',
+              '@types/node': '^16.11.12',
+              'ts-node': '^10.4.0',
+              typescript: '^4.5.2',
+            }
+          : {}),
       },
     };
 
@@ -84,8 +109,13 @@ async function createProject(projectDirectory: string): Promise<void> {
       JSON.stringify(packageJson, null, 2)
     );
 
-    const serverTs = `
-import app from './app';
+    const serverContent = `
+${
+  isTypeScript
+    ? "import express from 'express';"
+    : "const express = require('express');"
+}
+${isTypeScript ? "import app from './app';" : "const app = require('./app');"}
 
 const PORT = process.env.PORT || 3000;
 
@@ -94,8 +124,12 @@ app.listen(PORT, () => {
 });
 `;
 
-    const appTs = `
-import express from 'express';
+    const appContent = `
+${
+  isTypeScript
+    ? "import express from 'express';"
+    : "const express = require('express');"
+}
 
 const app = express();
 
@@ -105,31 +139,39 @@ app.get('/', (req, res) => {
   res.send('Hello from create-my-app!');
 });
 
-export default app;
+${isTypeScript ? 'export default app;' : 'module.exports = app;'}
 `;
 
-    await createFile(path.join(projectDirectory, 'src', 'server.ts'), serverTs);
-    await createFile(path.join(projectDirectory, 'src', 'app.ts'), appTs);
-
-    const tsConfig = {
-      compilerOptions: {
-        target: 'es6',
-        module: 'commonjs',
-        outDir: './dist',
-        rootDir: './src',
-        strict: true,
-        esModuleInterop: true,
-        skipLibCheck: true,
-        forceConsistentCasingInFileNames: true,
-      },
-      include: ['src/**/*'],
-      exclude: ['node_modules'],
-    };
-
     await createFile(
-      path.join(projectDirectory, 'tsconfig.json'),
-      JSON.stringify(tsConfig, null, 2)
+      path.join(projectDirectory, 'src', `server.${fileExtension}`),
+      serverContent
     );
+    await createFile(
+      path.join(projectDirectory, 'src', `app.${fileExtension}`),
+      appContent
+    );
+
+    if (isTypeScript) {
+      const tsConfig = {
+        compilerOptions: {
+          target: 'es6',
+          module: 'commonjs',
+          outDir: './dist',
+          rootDir: './src',
+          strict: true,
+          esModuleInterop: true,
+          skipLibCheck: true,
+          forceConsistentCasingInFileNames: true,
+        },
+        include: ['src/**/*'],
+        exclude: ['node_modules'],
+      };
+
+      await createFile(
+        path.join(projectDirectory, 'tsconfig.json'),
+        JSON.stringify(tsConfig, null, 2)
+      );
+    }
 
     console.log('Project created successfully!');
     console.log('To get started, run:');
