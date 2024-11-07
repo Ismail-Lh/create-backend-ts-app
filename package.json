@@ -12,7 +12,7 @@
   "bin": {
     "create-backend-ts-app": "./dist/index.js"
   },
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json",
     "start": "npm run build && cross-env NODE_ENV=production node --trace-warnings ./dist/index.js",
