@@ -5,6 +5,7 @@ import { promptForProjectType } from './prompts';
 import { generateTypeScriptFiles } from './templates/typescript';
 import { generateJavaScriptFiles } from './templates/javascript';
 import type { ProjectConfig } from './types';
+import { generateReadmeContent } from './templates/readme';
 
 /**
  * Creates a new project in the specified directory.
@@ -24,6 +25,7 @@ export async function createProject(projectDirectory: string): Promise<void> {
 
     const projectType = await promptForProjectType();
     const isTypeScript = projectType === 'typescript';
+    const projectName = path.basename(projectDirectory);
 
     await createDirectoryStructure(projectDirectory);
 
@@ -32,6 +34,13 @@ export async function createProject(projectDirectory: string): Promise<void> {
       path.join(projectDirectory, 'package.json'),
       JSON.stringify(packageJson, null, 2)
     );
+
+    // Generate README.md
+    const readmeContent = generateReadmeContent({
+      projectName,
+      isTypeScript,
+    });
+    await createFile(path.join(projectDirectory, 'README.md'), readmeContent);
 
     if (isTypeScript) {
       await generateTypeScriptFiles(projectDirectory);

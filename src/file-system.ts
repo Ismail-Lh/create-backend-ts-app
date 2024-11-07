@@ -14,7 +14,7 @@ import path from 'node:path';
  * - `src/models`
  * - `src/types`
  * - `src/constants`
- * - `src/middleware`
+ * - `src/middlewares`
  * - `src/config`
  * - `src/docs`
  *
@@ -34,7 +34,7 @@ export async function createDirectoryStructure(
     path.join(srcDir, 'models'),
     path.join(srcDir, 'types'),
     path.join(srcDir, 'constants'),
-    path.join(srcDir, 'middleware'),
+    path.join(srcDir, 'middlewares'),
     path.join(srcDir, 'config'),
     path.join(srcDir, 'docs'),
   ];
