@@ -22,7 +22,10 @@ import { createProject } from './project-creator';
 program
   .version('1.0.0')
   .argument('[project-directory]', 'Directory to create the project in', '.')
-  .action(createProject);
+  .option('--auth', 'Include authentication template')
+  .action((projectDirectory, options) => {
+    createProject(projectDirectory, options.auth || false);
+  });
 
 program.parse(process.argv);
 

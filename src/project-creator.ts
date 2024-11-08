@@ -1,26 +1,19 @@
+import fs from 'fs-extra';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { createDirectoryStructure, createFile } from './file-system';
-import { promptForPrettier, promptForProjectType } from './prompts';
-import { generateTypeScriptFiles } from './templates/typescript';
-import { generateJavaScriptFiles } from './templates/javascript';
-import type { ProjectConfig } from './types';
-import { generateReadmeContent } from './templates/readme';
-import { generatePrettierConfig } from './templates/prettier';
+import { createFile } from './file-system';
+import { promptForProjectType, promptForPrettier } from './prompts';
+import { generateReadmeContent } from '../template/readme';
+import { generatePrettierConfig } from '../template/prettier';
 
-/**
- * Creates a new project in the specified directory.
- *
- * This function prompts the user for the type of project (TypeScript or JavaScript),
- * creates the necessary directory structure, generates the `package.json` file,
- * and creates the appropriate project files based on the selected project type.
- *
- * @param {string} projectDirectory - The directory where the new project will be created.
- * @returns {Promise<void>} A promise that resolves when the project has been created successfully.
- *
- * @throws Will throw an error if there is an issue creating the project.
- */
-export async function createProject(projectDirectory: string): Promise<void> {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export async function createProject(
+  projectDirectory: string,
+  includeAuth: boolean
+): Promise<void> {
   try {
     console.log(`Creating a new project in ${projectDirectory}...`);
 
@@ -30,19 +23,33 @@ export async function createProject(projectDirectory: string): Promise<void> {
     const isTypeScript = projectType === 'typescript';
     const projectName = path.basename(projectDirectory);
 
-    await createDirectoryStructure(projectDirectory);
+    // Determine the template directory
+    const templateDir = path.join(
+      __dirname,
+      '..',
+      'template',
+      isTypeScript ? 'typescript' : 'javascript',
+      includeAuth ? 'auth' : 'base'
+    );
 
-    const packageJson = generatePackageJson(
-      projectDirectory,
-      isTypeScript,
-      usePrettier
-    );
-    await createFile(
-      path.join(projectDirectory, 'package.json'),
-      JSON.stringify(packageJson, null, 2)
-    );
+    console.log(`Copying template from ${templateDir} to ${projectDirectory}`);
+    await fs.copy(templateDir, projectDirectory);
+
+    // Update package.json
+    const packageJsonPath = path.join(projectDirectory, 'package.json');
+    console.log(`Updating ${packageJsonPath}`);
+
+    const packageJson = await fs.readJson(packageJsonPath);
+    packageJson.name = projectName;
+
+    if (usePrettier) {
+      packageJson.scripts.format = 'prettier --write "src/**/*.{js,ts}"';
+      packageJson.devDependencies.prettier = '^2.5.1';
+    }
+    await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
 
     // Generate README.md
+    console.log('Generating README.md');
     const readmeContent = generateReadmeContent({
       projectName,
       isTypeScript,
@@ -54,12 +61,6 @@ export async function createProject(projectDirectory: string): Promise<void> {
       await generatePrettierConfig(projectDirectory);
     }
 
-    if (isTypeScript) {
-      await generateTypeScriptFiles(projectDirectory);
-    } else {
-      await generateJavaScriptFiles(projectDirectory);
-    }
-
     console.log('Project created successfully!');
     console.log('To get started, run:');
     console.log(`  cd ${projectDirectory}`);
@@ -67,48 +68,9 @@ export async function createProject(projectDirectory: string): Promise<void> {
     console.log('  npm run dev');
   } catch (error) {
     console.error('Error creating project:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Stack trace:', error.stack);
+    }
   }
-}
-
-/**
- * Generates a package.json configuration object for a new project.
- *
- * @param projectDirectory - The directory of the project.
- * @param isTypeScript - A boolean indicating if the project uses TypeScript.
- * @returns A ProjectConfig object containing the package.json configuration.
- */
-function generatePackageJson(
-  projectDirectory: string,
-  isTypeScript: boolean,
-  usePrettier: boolean
-): ProjectConfig {
-  return {
-    name: path.basename(projectDirectory),
-    version: '1.0.0',
-    description: 'A project created with create-my-app',
-    main: isTypeScript ? 'dist/server.js' : 'src/server.js',
-    scripts: {
-      start: isTypeScript ? 'node dist/server.js' : 'node src/server.js',
-      dev: isTypeScript
-        ? 'nodemon --watch src --ext ts --exec ts-node src/server.ts'
-        : 'nodemon src/server.js',
-      ...(isTypeScript ? { build: 'tsc' } : {}),
-      ...(usePrettier ? { format: 'prettier --write "src/**/*.{js,ts}"' } : {}),
-    },
-    dependencies: {
-      express: '^4.17.1',
-    },
-    devDependencies: {
-      nodemon: '^2.0.15',
-      ...(isTypeScript
-        ? {
-            '@types/express': '^4.17.13',
-            '@types/node': '^16.11.12',
-            'ts-node': '^10.4.0',
-            typescript: '^4.5.2',
-          }
-        : {}),
-      ...(usePrettier ? { prettier: '^2.5.1' } : {}),
-    },
-  };
 }
