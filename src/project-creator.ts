@@ -1,20 +1,18 @@
-import fs from 'fs-extra';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { intro, outro, spinner } from '@clack/prompts';
+import { intro, outro } from '@clack/prompts';
 
-// import { createFile } from './file-system';
 import {
   promptForProjectType,
   promptForSelectingFormatter,
   promptForSelectingLinting,
 } from './prompts';
-// import { generateReadmeContent } from '../template/readme';
-// import { generatePrettierConfig } from '../template/prettier';
 import { renderTitle } from './utils/render-title';
 import { createReadmeFile } from './helpers/createReadmeFile';
 import { createPrettierConfig } from './helpers/createPrettierConfig';
 import { createEslintConfig } from './helpers/createEslintConfig';
+import { createProjectStructure } from './helpers/createProjectStructure';
+import { createPackageJson } from './helpers/createPackageJson';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,14 +45,19 @@ export async function createProject(
       includeAuth ? 'auth' : 'base'
     );
 
-    const copySpinner = spinner();
-    copySpinner.start('Copying template files');
-    await fs.copy(templateDir, projectDirectory);
-    copySpinner.stop('Template files copied successfully');
+    await createProjectStructure({ templateDir, projectDirectory });
 
     if (formatterEnabled) await createPrettierConfig({ projectDirectory });
 
     if (linterEnabled) await createEslintConfig({ projectDirectory });
+
+    await createPackageJson({
+      projectDirectory,
+      projectName,
+      isTypeScript,
+      formatterEnabled,
+      linterEnabled,
+    });
 
     await createReadmeFile({
       projectDirectory,
