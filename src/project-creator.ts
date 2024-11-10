@@ -7,6 +7,7 @@ import { createFile } from './file-system';
 import { promptForProjectType, promptForPrettier } from './prompts';
 import { generateReadmeContent } from '../template/readme';
 import { generatePrettierConfig } from '../template/prettier';
+import { renderTitle } from './utils/render-title';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,7 @@ export async function createProject(
   includeAuth: boolean
 ): Promise<void> {
   try {
+    renderTitle();
     intro(`Creating a new project in ${projectDirectory}...`);
 
     const projectType = await promptForProjectType();
