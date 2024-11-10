@@ -1,6 +1,6 @@
 {
-  "name": "create-backend-ts-app",
-  "version": "1.4.0",
+  "name": "create-node-nest",
+  "version": "1.0.0",
   "description": "",
   "author": "Lahbiyeb Ismail",
   "main": "index.js",
@@ -10,7 +10,7 @@
   ],
   "license": "MIT",
   "bin": {
-    "create-backend-ts-app": "./dist/index.js"
+    "create-node-nest": "./dist/index.js"
   },
   "files": [
     "dist",

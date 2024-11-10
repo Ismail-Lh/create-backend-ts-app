@@ -5,7 +5,7 @@ import { createProject } from './project-creator';
 import { intro, outro } from '@clack/prompts';
 
 /**
- * Entry point for the create-backend-ts-app CLI.
+ * Entry point for the create-node-nest CLI.
  *
  * This script uses the Commander library to handle command-line arguments and options.
  * It allows users to create a new project in a specified directory with optional authentication templates.
@@ -17,9 +17,9 @@ program
   .argument('<project-directory>', 'Directory to create the project in')
   .option('--auth', 'Include authentication template')
   .action(async (projectDirectory, options) => {
-    intro('Welcome to create-my-app!');
+    intro('Welcome to create-node-nest!');
     await createProject(projectDirectory, options.auth || false);
-    outro('Thank you for using create-my-app!');
+    outro('Thank you for using create-node-nest!');
   });
 
 program.parse(process.argv);
