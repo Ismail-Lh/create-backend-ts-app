@@ -46,3 +46,7 @@ export interface ProjectConfig {
     [key: string]: string;
   };
 }
+
+export type ProjectType = 'typescript' | 'javascript';
+
+export type FormatterType = 'eslint && prettier' | 'biomejs' | 'none';
