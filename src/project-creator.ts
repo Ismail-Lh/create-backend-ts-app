@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { intro, outro, spinner } from '@clack/prompts';
 
 import { createFile } from './file-system';
 import { promptForProjectType, promptForPrettier } from './prompts';
@@ -15,10 +16,17 @@ export async function createProject(
   includeAuth: boolean
 ): Promise<void> {
   try {
-    console.log(`Creating a new project in ${projectDirectory}...`);
+    intro(`Creating a new project in ${projectDirectory}...`);
 
     const projectType = await promptForProjectType();
+    if (!projectType) {
+      throw new Error('Project type selection was cancelled.');
+    }
+
     const usePrettier = await promptForPrettier();
+    if (usePrettier === null) {
+      throw new Error('Prettier selection was cancelled.');
+    }
 
     const isTypeScript = projectType === 'typescript';
     const projectName = path.basename(projectDirectory);
@@ -32,36 +40,41 @@ export async function createProject(
       includeAuth ? 'auth' : 'base'
     );
 
-    console.log(`Copying template from ${templateDir} to ${projectDirectory}`);
+    const copySpinner = spinner();
+    copySpinner.start('Copying template files');
     await fs.copy(templateDir, projectDirectory);
+    copySpinner.stop('Template files copied successfully');
 
-    // Update package.json
     const packageJsonPath = path.join(projectDirectory, 'package.json');
-    console.log(`Updating ${packageJsonPath}`);
-
+    const updatePackageSpinner = spinner();
+    updatePackageSpinner.start('Updating package.json');
     const packageJson = await fs.readJson(packageJsonPath);
     packageJson.name = projectName;
-
     if (usePrettier) {
       packageJson.scripts.format = 'prettier --write "src/**/*.{js,ts}"';
       packageJson.devDependencies.prettier = '^2.5.1';
     }
     await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
+    updatePackageSpinner.stop('package.json updated successfully');
 
-    // Generate README.md
-    console.log('Generating README.md');
+    const readmeSpinner = spinner();
+    readmeSpinner.start('Generating README.md');
     const readmeContent = generateReadmeContent({
       projectName,
       isTypeScript,
       usePrettier,
     });
     await createFile(path.join(projectDirectory, 'README.md'), readmeContent);
+    readmeSpinner.stop('README.md generated successfully');
 
     if (usePrettier) {
+      const prettierSpinner = spinner();
+      prettierSpinner.start('Generating Prettier configuration');
       await generatePrettierConfig(projectDirectory);
+      prettierSpinner.stop('Prettier configuration generated successfully');
     }
 
-    console.log('Project created successfully!');
+    outro('Project created successfully!');
     console.log('To get started, run:');
     console.log(`  cd ${projectDirectory}`);
     console.log('  npm install');
