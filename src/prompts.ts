@@ -1,5 +1,6 @@
-import { select } from '@clack/prompts';
-import type { FormatterType, ProjectType } from './types';
+import { note, select } from '@clack/prompts';
+import type { ProjectType } from './types';
+import chalk from 'chalk';
 
 /**
  * Prompts the user to select the type of project they want to create.
@@ -23,15 +24,44 @@ export async function promptForProjectType(): Promise<ProjectType> {
  *
  * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the user's choice.
  */
-export async function promptForSelectingFormatter(): Promise<FormatterType> {
+export async function promptForSelectingFormatter(): Promise<boolean> {
   const projectFormatter = await select({
     message: 'Do you want to use Prettier for code formatting?',
     options: [
-      { value: 'eslint && prettier', label: 'ESLint and Prettier' },
-      { value: 'biomejs', label: 'BiomeJS' },
-      { value: 'none', label: 'None' },
+      { value: true, label: 'Yes' },
+      { value: false, label: 'No' },
     ],
+    initialValue: true,
   });
 
-  return projectFormatter as FormatterType;
+  if (!projectFormatter) {
+    note(
+      chalk.redBright(
+        'Wrong choice. Prettier is recommended for maintaining code style.'
+      )
+    );
+  }
+
+  return projectFormatter as boolean;
+}
+
+export async function promptForSelectingLinting(): Promise<boolean> {
+  const linting = await select({
+    message: 'Do you want to use ESLint for linting?',
+    options: [
+      { value: true, label: 'Yes' },
+      { value: false, label: 'No' },
+    ],
+    initialValue: true,
+  });
+
+  if (!linting) {
+    note(
+      chalk.redBright(
+        'Wrong choice. ESLint is recommended for maintaining code quality.'
+      )
+    );
+  }
+
+  return linting as boolean;
 }
