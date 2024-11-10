@@ -1,15 +1,15 @@
-import type { FormatterType } from '../src/types';
-
 interface ReadmeConfig {
   projectName: string;
   isTypeScript: boolean;
-  projectFormatter: FormatterType;
+  formatterEnabled: boolean;
+  linterEnabled: boolean;
 }
 
 export function generateReadmeContent({
   projectName,
   isTypeScript,
-  projectFormatter,
+  formatterEnabled,
+  linterEnabled,
 }: ReadmeConfig): string {
   return `# ${projectName}
 
@@ -75,21 +75,21 @@ ${
   isTypeScript
     ? `- \`npm run dev\`: Starts the development server with hot-reload using nodemon and ts-node.
 - \`npm run build\`: Compiles TypeScript code to JavaScript.
-- \`npm start\`: Runs the compiled JavaScript code from the dist folder.
-- \`npm test\`: Runs the test suite using Jest.
-- \`npm run lint\`: Lints the code using ESLint.${
-        projectFormatter === 'eslint && prettier'
+- \`npm start\`: Runs the compiled JavaScript code from the dist folder.${
+        formatterEnabled
           ? '\n- `npm run format`: Formats the code using Prettier.'
           : ''
+      } ${
+        linterEnabled ? '\n- `npm run lint`: Lints the code using ESLint.' : ''
       }`
     : `- \`npm run dev\`: Starts the development server with hot-reload using nodemon.
-- \`npm start\`: Runs the JavaScript code directly.
-- \`npm test\`: Runs the test suite using Jest.
-- \`npm run lint\`: Lints the code using ESLint.${
-        projectFormatter === 'eslint && prettier'
+- \`npm start\`: Runs the JavaScript code directly.${
+        formatterEnabled
           ? '\n- `npm run format`: Formats the code using Prettier.'
           : ''
-      }`
+      } ${
+        linterEnabled ? '\n- `npm run lint`: Lints the code using ESLint.' : ''
+      } `
 }
 
 ## Project Components
@@ -179,21 +179,12 @@ To customize the TypeScript configuration, edit the \`tsconfig.json\` file in th
     app.use('/api/users', userRoutes);
     \`\`\`
 
-## Testing
-
-This project uses Jest for testing. To run the tests:
-
-\`\`\`bash
-npm test
-\`\`\`
-
-Add your test files in the \`src/__tests__/\` directory with the naming convention \`*.test.${
-    isTypeScript ? 'ts' : 'js'
-  }\`.
 
 ## Code Style and Linting
 
-This project uses ESLint for linting and Prettier for code formatting. To lint your code:
+This project uses ESLint for linting and Prettier for code formatting. 
+
+To lint your code:
 
 \`\`\`bash
 npm run lint
