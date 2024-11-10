@@ -1,13 +1,15 @@
+import type { FormatterType } from '../src/types';
+
 interface ReadmeConfig {
   projectName: string;
   isTypeScript: boolean;
-  usePrettier: boolean;
+  projectFormatter: FormatterType;
 }
 
 export function generateReadmeContent({
   projectName,
   isTypeScript,
-  usePrettier,
+  projectFormatter,
 }: ReadmeConfig): string {
   return `# ${projectName}
 
@@ -76,7 +78,7 @@ ${
 - \`npm start\`: Runs the compiled JavaScript code from the dist folder.
 - \`npm test\`: Runs the test suite using Jest.
 - \`npm run lint\`: Lints the code using ESLint.${
-        usePrettier
+        projectFormatter === 'eslint && prettier'
           ? '\n- `npm run format`: Formats the code using Prettier.'
           : ''
       }`
@@ -84,7 +86,7 @@ ${
 - \`npm start\`: Runs the JavaScript code directly.
 - \`npm test\`: Runs the test suite using Jest.
 - \`npm run lint\`: Lints the code using ESLint.${
-        usePrettier
+        projectFormatter === 'eslint && prettier'
           ? '\n- `npm run format`: Formats the code using Prettier.'
           : ''
       }`
