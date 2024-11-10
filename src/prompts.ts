@@ -1,13 +1,12 @@
-import { confirm, select } from '@clack/prompts';
+import { select } from '@clack/prompts';
+import type { FormatterType, ProjectType } from './types';
 
 /**
  * Prompts the user to select the type of project they want to create.
  *
  * @returns {Promise<'typescript' | 'javascript'>} A promise that resolves to the selected project type.
  */
-export async function promptForProjectType(): Promise<
-  'typescript' | 'javascript'
-> {
+export async function promptForProjectType(): Promise<ProjectType> {
   const projectType = await select({
     message: 'Choose the project type:',
     options: [
@@ -16,7 +15,7 @@ export async function promptForProjectType(): Promise<
     ],
   });
 
-  return projectType as 'typescript' | 'javascript';
+  return projectType as ProjectType;
 }
 
 /**
@@ -24,10 +23,15 @@ export async function promptForProjectType(): Promise<
  *
  * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the user's choice.
  */
-export async function promptForPrettier(): Promise<boolean> {
-  const usePrettier = await confirm({
+export async function promptForSelectingFormatter(): Promise<FormatterType> {
+  const projectFormatter = await select({
     message: 'Do you want to use Prettier for code formatting?',
+    options: [
+      { value: 'eslint && prettier', label: 'ESLint and Prettier' },
+      { value: 'biomejs', label: 'BiomeJS' },
+      { value: 'none', label: 'None' },
+    ],
   });
 
-  return usePrettier as boolean;
+  return projectFormatter as FormatterType;
 }
